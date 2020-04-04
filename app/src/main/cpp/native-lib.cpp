@@ -16,12 +16,22 @@ extern "C" {
  * 添加ADTS头部
  */
 void adts_header(char *szAdtsHeader, int dataLen) {
-
-    int audio_object_type = 2;
-    int sampling_frequency_index = 4;
-    int channel_config = 1;
-
-    int adtsLen = dataLen + 7;
+    /**
+     * AAC编码级别
+     */
+    const int audio_object_type = 2;
+    /**
+     * 采样率对应的索引值
+     */
+    const int sampling_frequency_index = 4;
+    /**
+     * 声道数
+     */
+    const int channel_config = 1;
+    /**
+     * 编码数据长度加ADTS头部的长度
+     */
+    const int adtsLen = dataLen + 7;
 
     szAdtsHeader[0] = 0xff;         //syncword:0xfff                          高8bits
     szAdtsHeader[1] = 0xf0;         //syncword:0xfff                          低4bits
