@@ -74,14 +74,17 @@ Java_com_example_ffmpegstudy_Demo_extractAudio(JNIEnv *env, jobject thiz, jstrin
     const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
     __android_log_print(ANDROID_LOG_ERROR, "AV", "%s %s", inputFilePath, outputFilePath);
     AVFormatContext *avFormatContext = NULL;
-    int ret = avformat_open_input(&avFormatContext, inputFilePath, NULL, NULL);
-    __android_log_print(ANDROID_LOG_ERROR, "AV", "open result: %s", av_err2str(ret));
+    const int openResult = avformat_open_input(&avFormatContext, inputFilePath, NULL, NULL);
+    __android_log_print(ANDROID_LOG_ERROR, "AV", "open result: %s", av_err2str(openResult));
     FILE *outputFile = fopen(env->GetStringUTFChars(output_path, NULL), "wb");
-    ret = av_find_best_stream(avFormatContext, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
+    const int audioStreamIndex = av_find_best_stream(avFormatContext, AVMEDIA_TYPE_AUDIO, -1, -1,
+                                                     NULL, 0);
     AVPacket avPacket;
     av_init_packet(&avPacket);
+    avPacket.data = NULL;
+    avPacket.size = 0;
     while (av_read_frame(avFormatContext, &avPacket) >= 0) {
-        if (avPacket.stream_index != ret) {
+        if (avPacket.stream_index != audioStreamIndex) {
             continue;
         }
         char adtsHeader[7];
@@ -90,10 +93,10 @@ Java_com_example_ffmpegstudy_Demo_extractAudio(JNIEnv *env, jobject thiz, jstrin
         fwrite(avPacket.data, 1, avPacket.size, outputFile);
         av_packet_unref(&avPacket);
     }
-    avformat_close_input(&avFormatContext);
     if (outputFile) {
         fclose(outputFile);
         outputFile = NULL;
     }
+    avformat_close_input(&avFormatContext);
     avFormatContext = NULL;
 }
