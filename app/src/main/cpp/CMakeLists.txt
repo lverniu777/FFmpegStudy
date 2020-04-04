@@ -30,7 +30,7 @@ add_library(
 set_target_properties(
         avcodec
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidSourceCode/app/src/main/jniLibs/arm64-v8a/libavcodec.so
+        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libavcodec.so
 )
 
 add_library(
@@ -41,7 +41,7 @@ add_library(
 set_target_properties(
         avdevice
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidSourceCode/app/src/main/jniLibs/arm64-v8a/libavdevice.so
+        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libavdevice.so
 )
 
 add_library(
@@ -52,7 +52,7 @@ add_library(
 set_target_properties(
         avfilter
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidSourceCode/app/src/main/jniLibs/arm64-v8a/libavfilter.so
+        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libavfilter.so
 )
 
 add_library(
@@ -63,7 +63,7 @@ add_library(
 set_target_properties(
         avformat
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidSourceCode/app/src/main/jniLibs/arm64-v8a/libavformat.so
+        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libavformat.so
 )
 
 add_library(
@@ -74,7 +74,7 @@ add_library(
 set_target_properties(
         avutil
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidSourceCode/app/src/main/jniLibs/arm64-v8a/libavutil.so
+        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libavutil.so
 )
 
 
@@ -86,7 +86,7 @@ add_library(
 set_target_properties(
         swresample
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidSourceCode/app/src/main/jniLibs/arm64-v8a/libswresample.so
+        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libswresample.so
 )
 
 
@@ -98,7 +98,7 @@ add_library(
 set_target_properties(
         swscale
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidSourceCode/app/src/main/jniLibs/arm64-v8a/libswscale.so
+        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libswscale.so
 )
 
 # Searches for a specified prebuilt library and stores the path as a

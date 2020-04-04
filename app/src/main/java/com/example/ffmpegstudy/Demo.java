@@ -15,5 +15,6 @@ public class Demo {
 
 
 
-    public native String getAVFormat(String filePath, String mode);
+
+    public native void extractAudio(String inputPath,String outputPath);
 }

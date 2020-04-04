@@ -46,6 +46,6 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         TextView tv = findViewById(R.id.sample_text);
-        tv.setText(demo.getAVFormat(inputFile.getAbsolutePath(), outputFilePath));
+        demo.extractAudio(inputFilePath, outputFilePath);
     }
 }

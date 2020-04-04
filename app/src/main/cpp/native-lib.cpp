@@ -67,16 +67,16 @@ void adts_header(char *szAdtsHeader, int dataLen) {
 }
 
 extern "C"
-JNIEXPORT jstring JNICALL
-Java_com_example_ffmpegstudy_Demo_getAVFormat(JNIEnv *env, jobject thiz, jstring input_file_path,
-                                              jstring out_file_path) {
-    const char *inputFilePath = env->GetStringUTFChars(input_file_path, NULL);
-    __android_log_print(ANDROID_LOG_ERROR, "AV", inputFilePath);
+JNIEXPORT void JNICALL
+Java_com_example_ffmpegstudy_Demo_extractAudio(JNIEnv *env, jobject thiz, jstring input_path,
+                                               jstring output_path) {
+    const char *inputFilePath = env->GetStringUTFChars(input_path, NULL);
+    const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
+    __android_log_print(ANDROID_LOG_ERROR, "AV", "%s %s", inputFilePath, outputFilePath);
     AVFormatContext *avFormatContext = NULL;
     int ret = avformat_open_input(&avFormatContext, inputFilePath, NULL, NULL);
-    __android_log_print(ANDROID_LOG_ERROR, "AV", av_err2str(ret));
-    string metaInfo = "bitRate: " + to_string(avFormatContext->duration);
-    FILE *outputFile = fopen(env->GetStringUTFChars(out_file_path, NULL), "wb");
+    __android_log_print(ANDROID_LOG_ERROR, "AV", "open result: %s", av_err2str(ret));
+    FILE *outputFile = fopen(env->GetStringUTFChars(output_path, NULL), "wb");
     ret = av_find_best_stream(avFormatContext, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
     AVPacket avPacket;
     av_init_packet(&avPacket);
@@ -96,5 +96,4 @@ Java_com_example_ffmpegstudy_Demo_getAVFormat(JNIEnv *env, jobject thiz, jstring
         outputFile = NULL;
     }
     avFormatContext = NULL;
-    return env->NewStringUTF(metaInfo.data());
 }
