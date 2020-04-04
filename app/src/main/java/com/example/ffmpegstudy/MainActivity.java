@@ -38,7 +38,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         final String inputFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "ffmpeg_test.mp4";
-        final String outputFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "output.aac";
+        final String outputAudioFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "output.aac";
+        final String outputVideoFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "output.h264";
         final File inputFile = new File(inputFilePath);
         if (inputFile.exists()) {
             Toast.makeText(this, "File exit: " + inputFilePath, Toast.LENGTH_LONG).show();
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         TextView tv = findViewById(R.id.sample_text);
-        demo.extractAudio(inputFilePath, outputFilePath);
+        demo.extractAudio(inputFilePath, outputAudioFilePath);
+        demo.extractVideo(inputFilePath,outputVideoFilePath);
     }
 }

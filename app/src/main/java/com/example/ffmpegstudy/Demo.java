@@ -12,9 +12,7 @@ public class Demo {
         System.loadLibrary("swscale");
     }
 
-
-
-
-
     public native void extractAudio(String inputPath,String outputPath);
+
+    public native void extractVideo(String inputPath,String outputPath);
 }
