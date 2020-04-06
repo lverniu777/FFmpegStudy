@@ -1,8 +1,5 @@
 #include <jni.h>
-#include <string>
 #include <android/log.h>
-#include <iostream>
-#include <string>
 
 #ifndef AV_WB32
 #   define AV_WB32(p, val) do {                 \
@@ -19,12 +16,12 @@
     ((((const uint8_t*)(x))[0] << 8) |          \
       ((const uint8_t*)(x))[1])
 #endif
-using namespace std;
 
 
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
 }
 
 /*
@@ -401,4 +398,76 @@ Java_com_example_ffmpegstudy_Demo_extractVideo(JNIEnv *env, jobject thiz, jstrin
     outputFile = NULL;
     avformat_close_input(&avFormatContext);
     avFormatContext = NULL;
+}
+
+
+/**
+ * MP4转换成FLV
+ */
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_ffmpegstudy_Demo_mp4CnvertToFLV(JNIEnv *env, jobject thiz, jstring input_path,
+                                                 jstring output_path) {
+    const char *inputFilePath = env->GetStringUTFChars(input_path, NULL);
+    const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
+    __android_log_print(ANDROID_LOG_ERROR, "AV", "%s %s", inputFilePath, outputFilePath);
+    AVFormatContext *inputAvFormatContext = NULL;
+    //分配一个输入的AVFormatContext
+    const int openResult = avformat_open_input(&inputAvFormatContext, inputFilePath, NULL, NULL);
+    __android_log_print(ANDROID_LOG_ERROR, "AV", "open result: %s", av_err2str(openResult));
+    //获取流信息保存至AVStream结构中
+    avformat_find_stream_info(inputAvFormatContext, NULL);
+    AVFormatContext *outputAVFormatContext = NULL;
+    //分配一个输出的AVFormatContext
+    avformat_alloc_output_context2(&outputAVFormatContext, NULL, NULL, outputFilePath);
+    //多媒体文件中的流的数量
+    const int streamNums = inputAvFormatContext->nb_streams;
+    //将输入的多媒体文件中的各种流数据写入到输出的AVFormatContext中
+    for (int i = 0; i < streamNums; i++) {
+        const AVStream *inputStream = inputAvFormatContext->streams[i];
+        const AVCodecParameters *avCodecParameters = inputStream->codecpar;
+        if (avCodecParameters->codec_type != AVMEDIA_TYPE_VIDEO
+            && avCodecParameters->codec_type != AVMEDIA_TYPE_AUDIO
+            && avCodecParameters->codec_type != AVMEDIA_TYPE_SUBTITLE
+                ) {
+            continue;
+        }
+        const AVStream *outputStream = avformat_new_stream(outputAVFormatContext, NULL);
+        avcodec_parameters_copy(outputStream->codecpar, inputStream->codecpar);
+        outputStream->codecpar->codec_tag = 0;
+    }
+    const AVOutputFormat *avOutputFormat = outputAVFormatContext->oformat;
+    //打开输出文件
+    if (!(avOutputFormat->flags & AVFMT_NOFILE)) {
+        avio_open(&outputAVFormatContext->pb, outputFilePath, AVIO_FLAG_WRITE);
+    }
+    //向输出文件写入头部
+    avformat_write_header(outputAVFormatContext, NULL);
+    //向输出文件中写入媒体数据
+    AVPacket avPacket;
+    while (av_read_frame(inputAvFormatContext, &avPacket) >= 0) {
+        const AVStream *inputAVStream = inputAvFormatContext->streams[avPacket.stream_index];
+        const AVStream *outputAVStream = outputAVFormatContext->streams[avPacket.stream_index];
+
+        //时间基转换
+        //使用枚举进行或运算AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX会报错，不知为何no matching function for call to 'av_rescale_q_rnd'
+        //因此这里使用单一的枚举
+        avPacket.pts = av_rescale_q_rnd(avPacket.pts, inputAVStream->time_base,
+                                        outputAVStream->time_base, AV_ROUND_NEAR_INF);
+        avPacket.dts = av_rescale_q_rnd(avPacket.dts, inputAVStream->time_base,
+                                        outputAVStream->time_base,
+                                        AV_ROUND_NEAR_INF);
+        avPacket.duration = av_rescale_q(avPacket.duration, inputAVStream->time_base,
+                                         outputAVStream->time_base);
+        avPacket.pos = -1;
+        //交错写入至多媒体文件中
+        av_interleaved_write_frame(outputAVFormatContext, &avPacket);
+        av_packet_unref(&avPacket);
+    }
+    //写入文件尾部
+    av_write_trailer(outputAVFormatContext);
+    avformat_close_input(&inputAvFormatContext);
+    inputAvFormatContext = NULL;
+    avformat_free_context(outputAVFormatContext);
+    outputAVFormatContext = NULL;
 }

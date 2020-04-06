@@ -15,4 +15,6 @@ public class Demo {
     public native void extractAudio(String inputPath,String outputPath);
 
     public native void extractVideo(String inputPath,String outputPath);
+
+    public native void mp4CnvertToFLV(String inputPath,String outputPath);
 }
