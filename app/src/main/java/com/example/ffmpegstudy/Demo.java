@@ -12,9 +12,11 @@ public class Demo {
         System.loadLibrary("swscale");
     }
 
-    public native void extractAudio(String inputPath,String outputPath);
+    public native void extractAudio(String inputPath, String outputPath);
 
-    public native void extractVideo(String inputPath,String outputPath);
+    public native void extractVideo(String inputPath, String outputPath);
 
-    public native void mp4CnvertToFLV(String inputPath,String outputPath);
+    public native void mp4CnvertToFLV(String inputPath, String outputPath);
+
+    public native void cutVideo(String inputPath, String outputPath, int startTime, int endTime);
 }

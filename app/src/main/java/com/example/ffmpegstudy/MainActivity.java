@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         final String inputFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "ffmpeg_test.mp4";
-        final String outputFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "ffmpeg_test.flv";
+        final String outputFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "ffmpeg_test2.mp4";
         final String outputAudioFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "output.aac";
         final String outputVideoFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "output.h264";
         final File inputFile = new File(inputFilePath);
@@ -48,8 +48,9 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         TextView tv = findViewById(R.id.sample_text);
-        demo.extractAudio(inputFilePath, outputAudioFilePath);
-        demo.extractVideo(inputFilePath, outputVideoFilePath);
-        demo.mp4CnvertToFLV(inputFilePath, outputFilePath);
+//        demo.extractAudio(inputFilePath, outputAudioFilePath);
+//        demo.extractVideo(inputFilePath, outputVideoFilePath);
+//        demo.mp4CnvertToFLV(inputFilePath, outputFilePath);
+        demo.cutVideo(inputFilePath,outputFilePath,5,15);
     }
 }

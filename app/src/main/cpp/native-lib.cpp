@@ -404,8 +404,7 @@ Java_com_example_ffmpegstudy_Demo_extractVideo(JNIEnv *env, jobject thiz, jstrin
 /**
  * MP4转换成FLV
  */
-extern "C"
-JNIEXPORT void JNICALL
+extern "C" JNIEXPORT void JNICALL
 Java_com_example_ffmpegstudy_Demo_mp4CnvertToFLV(JNIEnv *env, jobject thiz, jstring input_path,
                                                  jstring output_path) {
     const char *inputFilePath = env->GetStringUTFChars(input_path, NULL);
@@ -470,4 +469,81 @@ Java_com_example_ffmpegstudy_Demo_mp4CnvertToFLV(JNIEnv *env, jobject thiz, jstr
     inputAvFormatContext = NULL;
     avformat_free_context(outputAVFormatContext);
     outputAVFormatContext = NULL;
+}
+
+/**
+ * 裁剪视频
+ */
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_ffmpegstudy_Demo_cutVideo(JNIEnv *env, jobject thiz, jstring input_path,
+                                           jstring output_path, jint start_time, jint end_time) {
+    const char *inputFilePath = env->GetStringUTFChars(input_path, NULL);
+    const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
+    const long startTime = start_time;
+    const long endTime = end_time;
+    AVFormatContext *inputAVFormat = NULL;
+    avformat_open_input(&inputAVFormat, inputFilePath, NULL, NULL);
+    avformat_find_stream_info(inputAVFormat, NULL);
+    AVFormatContext *outputAVFormat = NULL;
+    avformat_alloc_output_context2(&outputAVFormat, NULL, NULL, outputFilePath);
+    for (int i = 0; i < inputAVFormat->nb_streams; i++) {
+        const AVStream *inputStream = inputAVFormat->streams[i];
+        const AVStream *outputStream = avformat_new_stream(outputAVFormat, NULL);
+        avcodec_parameters_copy(outputStream->codecpar, inputStream->codecpar);
+    }
+    const AVOutputFormat *outputFormat = outputAVFormat->oformat;
+    if (!(outputFormat->flags & AVFMT_NOFILE)) {
+        avio_open(&(outputAVFormat->pb), outputFilePath, AVIO_FLAG_WRITE);
+    }
+    avformat_write_header(outputAVFormat, NULL);
+
+    av_seek_frame(inputAVFormat, -1, startTime * AV_TIME_BASE, AVSEEK_FLAG_ANY);
+
+    int64_t *dtsStartFrom = (int64_t *) (malloc(
+            sizeof(int64_t) * inputAVFormat->nb_streams));
+    memset(dtsStartFrom, 0, sizeof(int64_t) * inputAVFormat->nb_streams);
+    int64_t *ptsStartFrom = (int64_t *) malloc(sizeof(int64_t) * inputAVFormat->nb_streams);
+    memset(ptsStartFrom, 0, sizeof(int64_t) * inputAVFormat->nb_streams);
+    AVPacket avPacket;
+    av_init_packet(&avPacket);
+    while (av_read_frame(inputAVFormat, &avPacket) >= 0) {
+        const AVStream *inputStream = inputAVFormat->streams[avPacket.stream_index];
+        const AVStream *outputStream = outputAVFormat->streams[avPacket.stream_index];
+
+        if (av_q2d(inputStream->time_base) * avPacket.pts > endTime) {
+            av_packet_unref(&avPacket);
+            break;
+        }
+        if (dtsStartFrom[avPacket.stream_index] == 0) {
+            dtsStartFrom[avPacket.stream_index] = avPacket.dts;
+//            printf("dts_start_from: %s\n", av_ts2str(dts_start_from[pkt.stream_index]));
+        }
+        if (ptsStartFrom[avPacket.stream_index] == 0) {
+            ptsStartFrom[avPacket.stream_index] = avPacket.pts;
+//            printf("ptsStartFrom: %s\n", av_ts2str(ptsStartFrom[pkt.stream_index]));
+        }
+
+        avPacket.pts = av_rescale_q_rnd(avPacket.pts - ptsStartFrom[avPacket.stream_index],
+                inputStream->time_base, outputStream->time_base, AV_ROUND_NEAR_INF);
+        avPacket.dts = av_rescale_q_rnd(avPacket.dts - dtsStartFrom[avPacket.stream_index], inputStream->time_base,
+                outputStream->time_base, AV_ROUND_NEAR_INF);
+        if (avPacket.pts < 0) {
+            avPacket.pts = 0;
+        }
+        if (avPacket.dts < 0) {
+            avPacket.dts = 0;
+        }
+        avPacket.duration = (int)av_rescale_q((int64_t)avPacket.duration, inputStream->time_base, outputStream->time_base);
+        avPacket.pos = -1;
+
+        av_interleaved_write_frame(outputAVFormat,&avPacket);
+        av_packet_unref(&avPacket);
+    }
+    av_write_trailer(outputAVFormat);
+    avio_close(outputAVFormat->pb);
+    avformat_close_input(&inputAVFormat);
+    avformat_free_context(outputAVFormat);
+    free(dtsStartFrom);
+    free(ptsStartFrom);
 }
