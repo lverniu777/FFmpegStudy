@@ -136,7 +136,6 @@ int h264_extradata_to_annexb(const uint8_t *codec_extradata, const int codec_ext
 
     sps_offset = pps_offset = -1;
 
-    /* retrieve sps and pps unit(s) */
     unit_nb = *extradata++ & 0x1f; /* number of sps unit(s) */
     if (!unit_nb) {
         goto pps;
@@ -169,7 +168,7 @@ int h264_extradata_to_annexb(const uint8_t *codec_extradata, const int codec_ext
         extradata += 2 + unit_size;
         pps:
         if (!unit_nb && !sps_done++) {
-            unit_nb = *extradata++; /* number of pps unit(s) */
+            unit_nb = *extradata++;
             if (unit_nb) {
                 pps_offset = total_size;
                 pps_seen = 1;
@@ -219,88 +218,31 @@ int h264_mp4toannexb(AVFormatContext *fmt_ctx, AVPacket *in, FILE *dst_fd) {
 
     do {
         ret = AVERROR(EINVAL);
-        if (buf + 4 /*s->length_size*/ > buf_end)
+        if (buf + 4 > buf_end)
             goto fail;
 
-        for (nal_size = 0, i = 0; i < 4/*s->length_size*/; i++)
+        for (nal_size = 0, i = 0; i < 4; i++)
             nal_size = (nal_size << 8) | buf[i];
 
-        buf += 4; /*s->length_size;*/
+        buf += 4;
         unit_type = *buf & 0x1f;
 
         if (nal_size > buf_end - buf || nal_size < 0)
             goto fail;
-
-        /*
-        if (unit_type == 7)
-            s->idr_sps_seen = s->new_idr = 1;
-        else if (unit_type == 8) {
-            s->idr_pps_seen = s->new_idr = 1;
-            */
-        /* if SPS has not been seen yet, prepend the AVCC one to PPS */
-        /*
-        if (!s->idr_sps_seen) {
-            if (s->sps_offset == -1)
-                av_log(ctx, AV_LOG_WARNING, "SPS not present in the stream, nor in AVCC, stream may be unreadable\n");
-            else {
-                if ((ret = alloc_and_copy(out,
-                                     ctx->par_out->extradata + s->sps_offset,
-                                     s->pps_offset != -1 ? s->pps_offset : ctx->par_out->extradata_size - s->sps_offset,
-                                     buf, nal_size)) < 0)
-                    goto fail;
-                s->idr_sps_seen = 1;
-                goto next_nal;
-            }
-        }
-    }
-    */
-
-        /* if this is a new IDR picture following an IDR picture, reset the idr flag.
-         * Just check first_mb_in_slice to be 0 as this is the simplest solution.
-         * This could be checking idr_pic_id instead, but would complexify the parsing. */
-        /*
-        if (!s->new_idr && unit_type == 5 && (buf[1] & 0x80))
-            s->new_idr = 1;
-
-        */
-        /* prepend only to the first type 5 NAL unit of an IDR picture, if no sps/pps are already present */
-        if (/*s->new_idr && */unit_type == 5 /*&& !s->idr_sps_seen && !s->idr_pps_seen*/) {
-
-
+        if (unit_type == 5) {
             h264_extradata_to_annexb(fmt_ctx->streams[in->stream_index]->codec->extradata,
                                      fmt_ctx->streams[in->stream_index]->codec->extradata_size,
                                      &spspps_pkt,
                                      AV_INPUT_BUFFER_PADDING_SIZE);
-
             if ((ret = alloc_and_copy(out,
                                       spspps_pkt.data, spspps_pkt.size,
                                       buf, nal_size)) < 0)
                 goto fail;
-            /*s->new_idr = 0;*/
-            /* if only SPS has been seen, also insert PPS */
-        }
-            /*else if (s->new_idr && unit_type == 5 && s->idr_sps_seen && !s->idr_pps_seen) {
-                if (s->pps_offset == -1) {
-                    av_log(ctx, AV_LOG_WARNING, "PPS not present in the stream, nor in AVCC, stream may be unreadable\n");
-                    if ((ret = alloc_and_copy(out, NULL, 0, buf, nal_size)) < 0)
-                        goto fail;
-                } else if ((ret = alloc_and_copy(out,
-                                            ctx->par_out->extradata + s->pps_offset, ctx->par_out->extradata_size - s->pps_offset,
-                                            buf, nal_size)) < 0)
-                    goto fail;
-            }*/ else {
+
+        } else {
             if ((ret = alloc_and_copy(out, NULL, 0, buf, nal_size)) < 0)
                 goto fail;
-            /*
-            if (!s->new_idr && unit_type == 1) {
-                s->new_idr = 1;
-                s->idr_sps_seen = 0;
-                s->idr_pps_seen = 0;
-            }
-            */
         }
-
-
         len = fwrite(out->data, 1, out->size, dst_fd);
         if (len != out->size) {
             av_log(NULL, AV_LOG_DEBUG,
@@ -312,15 +254,9 @@ int h264_mp4toannexb(AVFormatContext *fmt_ctx, AVPacket *in, FILE *dst_fd) {
 
         next_nal:
         buf += nal_size;
-        cumul_size += nal_size + 4;//s->length_size;
+        cumul_size += nal_size + 4;
     } while (cumul_size < buf_size);
 
-    /*
-    ret = av_packet_copy_props(out, in);
-    if (ret < 0)
-        goto fail;
-
-    */
     fail:
     av_packet_free(&out);
 
@@ -351,9 +287,7 @@ Java_com_example_ffmpegstudy_Demo_extractAudio(JNIEnv *env, jobject thiz, jstrin
         if (avPacket.stream_index != audioStreamIndex) {
             continue;
         }
-//        char adtsHeader[7];
         adts_header(avPacket.size, outputFile);
-//        fwrite(adtsHeader, 1, 7, outputFile);
         fwrite(avPacket.data, 1, avPacket.size, outputFile);
         av_packet_unref(&avPacket);
     }
@@ -517,27 +451,29 @@ Java_com_example_ffmpegstudy_Demo_cutVideo(JNIEnv *env, jobject thiz, jstring in
         }
         if (dtsStartFrom[avPacket.stream_index] == 0) {
             dtsStartFrom[avPacket.stream_index] = avPacket.dts;
-//            printf("dts_start_from: %s\n", av_ts2str(dts_start_from[pkt.stream_index]));
         }
         if (ptsStartFrom[avPacket.stream_index] == 0) {
             ptsStartFrom[avPacket.stream_index] = avPacket.pts;
-//            printf("ptsStartFrom: %s\n", av_ts2str(ptsStartFrom[pkt.stream_index]));
         }
 
         avPacket.pts = av_rescale_q_rnd(avPacket.pts - ptsStartFrom[avPacket.stream_index],
-                inputStream->time_base, outputStream->time_base, AV_ROUND_NEAR_INF);
-        avPacket.dts = av_rescale_q_rnd(avPacket.dts - dtsStartFrom[avPacket.stream_index], inputStream->time_base,
-                outputStream->time_base, AV_ROUND_NEAR_INF);
+                                        inputStream->time_base, outputStream->time_base,
+                                        (AVRounding) (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+        avPacket.dts = av_rescale_q_rnd(avPacket.dts - dtsStartFrom[avPacket.stream_index],
+                                        inputStream->time_base,
+                                        outputStream->time_base,
+                                        (AVRounding) (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
         if (avPacket.pts < 0) {
             avPacket.pts = 0;
         }
         if (avPacket.dts < 0) {
             avPacket.dts = 0;
         }
-        avPacket.duration = (int)av_rescale_q((int64_t)avPacket.duration, inputStream->time_base, outputStream->time_base);
+        avPacket.duration = (int) av_rescale_q((int64_t) avPacket.duration, inputStream->time_base,
+                                               outputStream->time_base);
         avPacket.pos = -1;
 
-        av_interleaved_write_frame(outputAVFormat,&avPacket);
+        av_interleaved_write_frame(outputAVFormat, &avPacket);
         av_packet_unref(&avPacket);
     }
     av_write_trailer(outputAVFormat);
