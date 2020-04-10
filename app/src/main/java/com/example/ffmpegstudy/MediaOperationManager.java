@@ -1,6 +1,9 @@
 package com.example.ffmpegstudy;
 
-public class Demo {
+/**
+ * 多媒体操作管理者
+ */
+public class MediaOperationManager {
     static {
         System.loadLibrary("native-lib");
         System.loadLibrary("avcodec");
@@ -11,6 +14,24 @@ public class Demo {
         System.loadLibrary("swresample");
         System.loadLibrary("swscale");
     }
+
+    private static volatile MediaOperationManager sInstance;
+
+    private MediaOperationManager() {
+
+    }
+
+    public static MediaOperationManager getInstance() {
+        if (sInstance == null) {
+            synchronized (MediaOperationManager.class) {
+                if (sInstance == null) {
+                    sInstance = new MediaOperationManager();
+                }
+            }
+        }
+        return sInstance;
+    }
+
 
     public native void extractAudio(String inputPath, String outputPath);
 

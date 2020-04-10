@@ -7,13 +7,46 @@
     tools:context=".MainActivity">
 
     <TextView
-        android:id="@+id/sample_text"
+        android:id="@+id/media_file_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
+        android:text="123"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <Button
+        android:id="@+id/choose_media_file"
+        android:layout_width="wrap_content"
+        app:layout_constraintVertical_bias="0"
+        android:layout_height="wrap_content"
+        android:text="选择视频文件!"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/media_file_name" />
+
+    <Button
+        android:id="@+id/extract_aac"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="抽取出AAC"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/choose_media_file"
+        app:layout_constraintVertical_bias="0" />
+
+    <Button
+        android:id="@+id/extract_h264"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="抽取出H264文件!"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/extract_aac"
+        app:layout_constraintVertical_bias="0" />
 </androidx.constraintlayout.widget.ConstraintLayout>

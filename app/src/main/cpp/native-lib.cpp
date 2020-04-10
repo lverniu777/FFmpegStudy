@@ -268,8 +268,8 @@ int h264_mp4toannexb(AVFormatContext *fmt_ctx, AVPacket *in, FILE *dst_fd) {
  */
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_ffmpegstudy_Demo_extractAudio(JNIEnv *env, jobject thiz, jstring input_path,
-                                               jstring output_path) {
+Java_com_example_ffmpegstudy_MediaOperationManager_extractAudio(JNIEnv *env, jobject thiz, jstring input_path,
+                                                                jstring output_path) {
     const char *inputFilePath = env->GetStringUTFChars(input_path, NULL);
     const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
     __android_log_print(ANDROID_LOG_ERROR, "AV", "%s %s", inputFilePath, outputFilePath);
@@ -302,8 +302,8 @@ Java_com_example_ffmpegstudy_Demo_extractAudio(JNIEnv *env, jobject thiz, jstrin
  */
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_ffmpegstudy_Demo_extractVideo(JNIEnv *env, jobject thiz, jstring input_path,
-                                               jstring output_path) {
+Java_com_example_ffmpegstudy_MediaOperationManager_extractVideo(JNIEnv *env, jobject thiz, jstring input_path,
+                                                                jstring output_path) {
     const char *inputFilePath = env->GetStringUTFChars(input_path, NULL);
     const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
     __android_log_print(ANDROID_LOG_ERROR, "AV", "%s %s", inputFilePath, outputFilePath);
@@ -339,8 +339,8 @@ Java_com_example_ffmpegstudy_Demo_extractVideo(JNIEnv *env, jobject thiz, jstrin
  * MP4转换成FLV
  */
 extern "C" JNIEXPORT void JNICALL
-Java_com_example_ffmpegstudy_Demo_mp4CnvertToFLV(JNIEnv *env, jobject thiz, jstring input_path,
-                                                 jstring output_path) {
+Java_com_example_ffmpegstudy_MediaOperationManager_mp4CnvertToFLV(JNIEnv *env, jobject thiz, jstring input_path,
+                                                                  jstring output_path) {
     const char *inputFilePath = env->GetStringUTFChars(input_path, NULL);
     const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
     __android_log_print(ANDROID_LOG_ERROR, "AV", "%s %s", inputFilePath, outputFilePath);
@@ -410,8 +410,8 @@ Java_com_example_ffmpegstudy_Demo_mp4CnvertToFLV(JNIEnv *env, jobject thiz, jstr
  */
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_ffmpegstudy_Demo_cutVideo(JNIEnv *env, jobject thiz, jstring input_path,
-                                           jstring output_path, jint start_time, jint end_time) {
+Java_com_example_ffmpegstudy_MediaOperationManager_cutVideo(JNIEnv *env, jobject thiz, jstring input_path,
+                                                            jstring output_path, jint start_time, jint end_time) {
     const char *inputFilePath = env->GetStringUTFChars(input_path, NULL);
     const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
     const long startTime = start_time;
