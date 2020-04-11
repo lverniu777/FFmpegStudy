@@ -8,9 +8,20 @@ import android.os.Build
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import java.io.File
 
 
 object FileUtils {
+    val ROOT_DIR: String
+        get() {
+            val dirPath = Environment.getExternalStorageDirectory().absolutePath + File.separator + "FFmpegStudy"
+            val dirFile = File(dirPath)
+            if (!dirFile.exists()) {
+                dirFile.mkdirs()
+            }
+            return dirPath
+        }
+
     fun getPath(context: Context, uri: Uri): String? {
         val isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
         // DocumentProvider
