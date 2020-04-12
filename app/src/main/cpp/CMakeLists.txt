@@ -101,6 +101,26 @@ set_target_properties(
         D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libswscale.so
 )
 
+add_library(
+        x264
+        SHARED
+        IMPORTED
+)
+set_target_properties(
+        x264
+        PROPERTIES IMPORTED_LOCATION
+        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libx2641.so
+)
+add_library(
+        fdkaac
+        SHARED
+        IMPORTED
+)
+set_target_properties(
+        fdkaac
+        PROPERTIES IMPORTED_LOCATION
+        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libfdk-aac.so
+)
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
 # default, you only need to specify the name of the public NDK library
@@ -127,6 +147,8 @@ target_link_libraries( # Specifies the target library.
         avutil
         swresample
         swscale
+        x264
+        fdkaac
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib})

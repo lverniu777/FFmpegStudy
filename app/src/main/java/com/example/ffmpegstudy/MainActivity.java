@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mExtractAACBtn;
     private Button mExtractH264Btn;
     private Button mMP4ConvertToFLVBtn;
+    private Button mEncodeH264Btn;
     private ProgressBar mProgressBar;
     private TextView mFileNameTv;
 
@@ -60,11 +61,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mExtractH264Btn = findViewById(R.id.extract_h264);
         mFileNameTv = findViewById(R.id.media_file_name);
         mMP4ConvertToFLVBtn = findViewById(R.id.convert_mp4_flv);
+        mEncodeH264Btn = findViewById(R.id.encodeh264);
         mProgressBar = findViewById(R.id.progress_bar);
         mChooseFileBtn.setOnClickListener(this);
         mExtractAACBtn.setOnClickListener(this);
         mExtractH264Btn.setOnClickListener(this);
         mMP4ConvertToFLVBtn.setOnClickListener(this);
+        mEncodeH264Btn.setOnClickListener(this);
         ActivityCompat.requestPermissions(this,
                 new String[]{
                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -97,18 +100,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivityForResult(intent, CHOOSE_FILE_REQUEST_CODE);
                 break;
             case R.id.extract_aac:
-                mProgressBar.setVisibility(View.VISIBLE);
-                mExecutor.execute(new ExtractAAC());
+                performAction(new ExtractAAC());
                 break;
             case R.id.extract_h264:
-                mProgressBar.setVisibility(View.VISIBLE);
-                mExecutor.execute(new ExtractH264());
+                performAction(new ExtractH264());
                 break;
             case R.id.convert_mp4_flv:
-                mProgressBar.setVisibility(View.VISIBLE);
-                mExecutor.execute(new ConvertMP4ToFLV());
+                performAction(new ConvertMP4ToFLV());
+                break;
+            case R.id.encodeh264:
+                performAction(new EncodeH264());
                 break;
         }
+    }
+
+    private void performAction(Runnable runnable) {
+        mProgressBar.setVisibility(View.VISIBLE);
+        mExecutor.execute(runnable);
     }
 
     @Override
@@ -186,6 +194,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 throw new RuntimeException(e);
             }
             mediaOperationManager.mp4CnvertToFLV(inputFilePath, outputFilePath);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(MainActivity.this, "输出文件：" + outputFilePath, Toast.LENGTH_LONG).show();
+                    mProgressBar.setVisibility(View.GONE);
+                }
+            });
+        }
+    }
+
+    private class EncodeH264 implements Runnable {
+
+        @Override
+        public void run() {
+            final String outputFilePath = FileUtils.INSTANCE.getROOT_DIR() + File.separator
+                    + System.currentTimeMillis() + ".h264";
+            mediaOperationManager.encodeH264(outputFilePath);
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

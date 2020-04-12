@@ -20,6 +20,7 @@
 
 extern "C" {
 #include <libavcodec/avcodec.h>
+#include <libavutil/opt.h>
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
 }
@@ -268,7 +269,8 @@ int h264_mp4toannexb(AVFormatContext *fmt_ctx, AVPacket *in, FILE *dst_fd) {
  */
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_ffmpegstudy_MediaOperationManager_extractAudio(JNIEnv *env, jobject thiz, jstring input_path,
+Java_com_example_ffmpegstudy_MediaOperationManager_extractAudio(JNIEnv *env, jobject thiz,
+                                                                jstring input_path,
                                                                 jstring output_path) {
     const char *inputFilePath = env->GetStringUTFChars(input_path, NULL);
     const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
@@ -302,7 +304,8 @@ Java_com_example_ffmpegstudy_MediaOperationManager_extractAudio(JNIEnv *env, job
  */
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_ffmpegstudy_MediaOperationManager_extractVideo(JNIEnv *env, jobject thiz, jstring input_path,
+Java_com_example_ffmpegstudy_MediaOperationManager_extractVideo(JNIEnv *env, jobject thiz,
+                                                                jstring input_path,
                                                                 jstring output_path) {
     const char *inputFilePath = env->GetStringUTFChars(input_path, NULL);
     const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
@@ -339,7 +342,8 @@ Java_com_example_ffmpegstudy_MediaOperationManager_extractVideo(JNIEnv *env, job
  * MP4转换成FLV
  */
 extern "C" JNIEXPORT void JNICALL
-Java_com_example_ffmpegstudy_MediaOperationManager_mp4CnvertToFLV(JNIEnv *env, jobject thiz, jstring input_path,
+Java_com_example_ffmpegstudy_MediaOperationManager_mp4CnvertToFLV(JNIEnv *env, jobject thiz,
+                                                                  jstring input_path,
                                                                   jstring output_path) {
     const char *inputFilePath = env->GetStringUTFChars(input_path, NULL);
     const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
@@ -410,8 +414,10 @@ Java_com_example_ffmpegstudy_MediaOperationManager_mp4CnvertToFLV(JNIEnv *env, j
  */
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_ffmpegstudy_MediaOperationManager_cutVideo(JNIEnv *env, jobject thiz, jstring input_path,
-                                                            jstring output_path, jint start_time, jint end_time) {
+Java_com_example_ffmpegstudy_MediaOperationManager_cutVideo(JNIEnv *env, jobject thiz,
+                                                            jstring input_path,
+                                                            jstring output_path, jint start_time,
+                                                            jint end_time) {
     const char *inputFilePath = env->GetStringUTFChars(input_path, NULL);
     const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
     const long startTime = start_time;
@@ -482,4 +488,96 @@ Java_com_example_ffmpegstudy_MediaOperationManager_cutVideo(JNIEnv *env, jobject
     avformat_free_context(outputAVFormat);
     free(dtsStartFrom);
     free(ptsStartFrom);
+}
+
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_example_ffmpegstudy_MediaOperationManager_encodeH264(JNIEnv *env, jobject thiz,
+                                                              jstring output_path) {
+
+    uint8_t endcode[] = {0, 0, 1, 0xb7};
+    AVCodec *avCodec = avcodec_find_encoder_by_name("libx264");
+    AVCodecContext *avCodecContext = avcodec_alloc_context3(avCodec);
+    avCodecContext->bit_rate = 40000;
+    avCodecContext->width = 720;
+    avCodecContext->height = 1280;
+    //时间基以帧率为基准，一秒25帧，那么时间刻度就是1/25
+    avCodecContext->time_base = (AVRational) {1, 25};
+    //帧率
+    avCodecContext->framerate = (AVRational) {25, 1};
+    //GOP大小，关键帧的间隔
+    avCodecContext->gop_size = 10;
+    //GOP中B帧数量
+    avCodecContext->max_b_frames = 1;
+    //原始数据中的像素格式
+    avCodecContext->pix_fmt = AV_PIX_FMT_YUV420P;
+    //如果是H264的编码器，设置一个参数
+    if (avCodec->id == AV_CODEC_ID_H264) {
+        //针对于H264使用预设参数preset slow级别，慢速度进行压缩，保证H264质量优先
+        av_opt_set(avCodecContext->priv_data, "preset", "slow", 0);
+    }
+    //打开编解码器
+    int openResult = avcodec_open2(avCodecContext, avCodec, NULL);
+    __android_log_print(ANDROID_LOG_ERROR, "FFmpeg", "open result:%s", av_err2str(openResult));
+    const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
+    FILE *outputFile = fopen(outputFilePath, "wb");
+    AVFrame *avFrame = av_frame_alloc();
+    avFrame->width = avCodecContext->width;
+    avFrame->height = avCodecContext->height;
+    avFrame->format = avCodecContext->pix_fmt;
+    const int getBufferResult = av_frame_get_buffer(avFrame, 0);
+    if (getBufferResult < 0) {
+        __android_log_print(ANDROID_LOG_ERROR, "FFmpeg", "frame_get_buffer result:%s",
+                            av_err2str(getBufferResult));
+    }
+    AVPacket avPacket;
+    int y, x, output/*AVFrame是否压缩成一个数据包AVPacket成功*/;
+    for (int i = 0; i < 25; i++) {
+        av_init_packet(&avPacket);
+        avPacket.data = NULL;
+        avPacket.size = 0;
+        fflush(stdout);
+        const int ret = av_frame_make_writable(avFrame);
+        if (ret < 0) {
+            __android_log_print(ANDROID_LOG_ERROR, "FFmpeg", "av_frame_make_writable result:%s",
+                                av_err2str(ret));
+        }
+        for (y = 0; y < avCodecContext->height; y++) {
+            for (x = 0; x < avCodecContext->width; x++) {
+                avFrame->data[0][y * avFrame->linesize[0] + x] = x + y + i * 3;
+            }
+        }
+        /* Cb and Cr */
+        for (y = 0; y < avCodecContext->height / 2; y++) {
+            for (x = 0; x < avCodecContext->width / 2; x++) {
+                avFrame->data[1][y * avFrame->linesize[1] + x] = 128 + y + i * 2;
+                avFrame->data[2][y * avFrame->linesize[2] + x] = 64 + x + i * 5;
+            }
+        }
+        avFrame->pts = i;
+
+        avcodec_encode_video2(avCodecContext, &avPacket, avFrame, &output);
+        if (output) {
+            fwrite(avPacket.data, 1, avPacket.size, outputFile);
+            av_packet_unref(&avPacket);
+        }
+    }
+
+    /* get the delayed frames */
+    for (output = 1; output; ) {
+        const int ret = avcodec_encode_video2(avCodecContext, &avPacket, NULL, &output);
+        if(ret < 0) {
+            __android_log_print(ANDROID_LOG_ERROR, "FFmpeg", "flush result:%s",
+                                av_err2str(ret));
+        }
+        if (output) {
+            fwrite(avPacket.data, 1, avPacket.size, outputFile);
+            av_packet_unref(&avPacket);
+        }
+    }
+    /* add sequence end code to have a real MPEG file */
+    fwrite(endcode, 1, sizeof(endcode), outputFile);
+    fclose(outputFile);
+    avcodec_free_context(&avCodecContext);
+    av_frame_free(&avFrame);
 }
