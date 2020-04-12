@@ -387,13 +387,12 @@ Java_com_example_ffmpegstudy_MediaOperationManager_mp4CnvertToFLV(JNIEnv *env, j
         const AVStream *outputAVStream = outputAVFormatContext->streams[avPacket.stream_index];
 
         //时间基转换
-        //使用枚举进行或运算AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX会报错，不知为何no matching function for call to 'av_rescale_q_rnd'
-        //因此这里使用单一的枚举
         avPacket.pts = av_rescale_q_rnd(avPacket.pts, inputAVStream->time_base,
-                                        outputAVStream->time_base, AV_ROUND_NEAR_INF);
+                                        outputAVStream->time_base,
+                                        (AVRounding) (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
         avPacket.dts = av_rescale_q_rnd(avPacket.dts, inputAVStream->time_base,
                                         outputAVStream->time_base,
-                                        AV_ROUND_NEAR_INF);
+                                        (AVRounding) (AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
         avPacket.duration = av_rescale_q(avPacket.duration, inputAVStream->time_base,
                                          outputAVStream->time_base);
         avPacket.pos = -1;
@@ -564,9 +563,9 @@ Java_com_example_ffmpegstudy_MediaOperationManager_encodeH264(JNIEnv *env, jobje
     }
 
     /* get the delayed frames */
-    for (output = 1; output; ) {
+    for (output = 1; output;) {
         const int ret = avcodec_encode_video2(avCodecContext, &avPacket, NULL, &output);
-        if(ret < 0) {
+        if (ret < 0) {
             __android_log_print(ANDROID_LOG_ERROR, "FFmpeg", "flush result:%s",
                                 av_err2str(ret));
         }
