@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.4.1)
 include_directories(
         include
 )
-add_definitions (-Wno-format-security)
+add_definitions(-Wno-format-security)
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -21,7 +21,8 @@ add_library( # Sets the name of the library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        native-lib.cpp)
+        native-lib.cpp
+        )
 add_library(
         avcodec
         SHARED

@@ -6,74 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-
-    <TextView
-        android:id="@+id/media_file_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="123"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toTopOf="@id/choose_media_file"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1" />
-
-    <Button
-        android:id="@+id/choose_media_file"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="选择视频文件!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-
-    <Button
-        android:id="@+id/extract_aac"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="抽取出AAC"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/choose_media_file"
-        app:layout_constraintVertical_bias="0" />
-
-    <Button
-        android:id="@+id/extract_h264"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="抽取出H264文件!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/extract_aac"
-        app:layout_constraintVertical_bias="0" />
-
-    <Button
-        android:id="@+id/convert_mp4_flv"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="MP4转FLV!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/extract_h264"
-        app:layout_constraintVertical_bias="0" />
-
-    <Button
-        android:id="@+id/encodeh264"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="编码H264"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/convert_mp4_flv"
-        app:layout_constraintVertical_bias="0" />
-
     <ProgressBar
         android:id="@+id/progress_bar"
         android:layout_width="50dp"
@@ -83,5 +15,82 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1" />
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <TextView
+        android:id="@+id/media_file_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:breakStrategy="high_quality"
+        android:gravity="center"
+        android:text="123"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/choose_media_file"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/progress_bar" />
+
+    <Button
+        android:id="@+id/choose_media_file"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="选择视频文件!"
+        app:layout_constraintBottom_toTopOf="@id/extract_aac"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/media_file_name" />
+
+
+    <Button
+        android:id="@+id/extract_aac"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="抽取出AAC"
+        app:layout_constraintBottom_toTopOf="@id/extract_h264"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/choose_media_file" />
+
+    <Button
+        android:id="@+id/extract_h264"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="抽取出H264文件!"
+        app:layout_constraintBottom_toTopOf="@id/convert_mp4_flv"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/extract_aac"
+
+        />
+
+    <Button
+        android:id="@+id/convert_mp4_flv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="MP4转FLV!"
+        app:layout_constraintBottom_toTopOf="@id/encodeh264"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/extract_h264" />
+
+    <Button
+        android:id="@+id/encodeh264"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="编码H264"
+        app:layout_constraintBottom_toTopOf="@id/extractImage"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/convert_mp4_flv" />
+
+    <Button
+        android:id="@+id/extractImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="提取出图片"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/encodeh264" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,6 +1,19 @@
 #include <jni.h>
 #include <android/log.h>
 
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavutil/opt.h>
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
+#include <libswscale/swscale.h>
+}
+
+#ifndef AV_RB16
+#   define AV_RB16(x)                           \
+    ((((const uint8_t*)(x))[0] << 8) |          \
+      ((const uint8_t*)(x))[1])
+#endif
 #ifndef AV_WB32
 #   define AV_WB32(p, val) do {                 \
         uint32_t d = (val);                     \
@@ -11,18 +24,139 @@
     } while(0)
 #endif
 
-#ifndef AV_RB16
-#   define AV_RB16(x)                           \
-    ((((const uint8_t*)(x))[0] << 8) |          \
-      ((const uint8_t*)(x))[1])
-#endif
+#define INBUF_SIZE 4096
+
+#define WORD uint16_t
+#define DWORD uint32_t
+#define LONG int32_t
+
+#pragma pack(2)
+typedef struct tagBITMAPFILEHEADER {
+    WORD bfType;
+    DWORD bfSize;
+    WORD bfReserved1;
+    WORD bfReserved2;
+    DWORD bfOffBits;
+} BITMAPFILEHEADER, *PBITMAPFILEHEADER;
 
 
-extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavutil/opt.h>
-#include <libavformat/avformat.h>
-#include <libavutil/avutil.h>
+typedef struct tagBITMAPINFOHEADER {
+    DWORD biSize;
+    LONG biWidth;
+    LONG biHeight;
+    WORD biPlanes;
+    WORD biBitCount;
+    DWORD biCompression;
+    DWORD biSizeImage;
+    LONG biXPelsPerMeter;
+    LONG biYPelsPerMeter;
+    DWORD biClrUsed;
+    DWORD biClrImportant;
+} BITMAPINFOHEADER, *PBITMAPINFOHEADER;
+
+void saveBMP(struct SwsContext *img_convert_ctx, AVFrame *frame, char *filename) {
+    //1 先进行转换,  YUV420=>RGB24:
+    int w = frame->width;
+    int h = frame->height;
+
+
+    int numBytes = avpicture_get_size(AV_PIX_FMT_BGR24, w, h);
+    uint8_t *buffer = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
+
+
+    AVFrame *pFrameRGB = av_frame_alloc();
+    /* buffer is going to be written to rawvideo file, no alignment */
+    /*
+    if (av_image_alloc(pFrameRGB->data, pFrameRGB->linesize,
+                              w, h, AV_PIX_FMT_BGR24, pix_fmt, 1) < 0) {
+        fprintf(stderr, "Could not allocate destination image\n");
+        exit(1);
+    }
+    */
+    avpicture_fill((AVPicture *) pFrameRGB, buffer, AV_PIX_FMT_BGR24, w, h);
+
+    sws_scale(img_convert_ctx, frame->data, frame->linesize,
+              0, h, pFrameRGB->data, pFrameRGB->linesize);
+
+    //2 构造 BITMAPINFOHEADER
+    BITMAPINFOHEADER header;
+    header.biSize = sizeof(BITMAPINFOHEADER);
+
+
+    header.biWidth = w;
+    header.biHeight = h * (-1);
+    header.biBitCount = 24;
+    header.biCompression = 0;
+    header.biSizeImage = 0;
+    header.biClrImportant = 0;
+    header.biClrUsed = 0;
+    header.biXPelsPerMeter = 0;
+    header.biYPelsPerMeter = 0;
+    header.biPlanes = 1;
+
+    //3 构造文件头
+    BITMAPFILEHEADER bmpFileHeader = {0,};
+    //HANDLE hFile = NULL;
+    DWORD dwTotalWriten = 0;
+    DWORD dwWriten;
+
+    bmpFileHeader.bfType = 0x4d42; //'BM';
+    bmpFileHeader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + numBytes;
+    bmpFileHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+    FILE *pf = fopen(filename, "wb");
+    fwrite(&bmpFileHeader, sizeof(BITMAPFILEHEADER), 1, pf);
+    fwrite(&header, sizeof(BITMAPINFOHEADER), 1, pf);
+    fwrite(pFrameRGB->data[0], 1, numBytes, pf);
+    fclose(pf);
+
+
+    //释放资源
+    //av_free(buffer);
+    av_freep(&pFrameRGB[0]);
+    av_free(pFrameRGB);
+}
+
+static void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize,
+                     char *filename) {
+    FILE *f;
+    int i;
+
+    f = fopen(filename, "w");
+    fprintf(f, "P5\n%d %d\n%d\n", xsize, ysize, 255);
+    for (i = 0; i < ysize; i++)
+        fwrite(buf + i * wrap, 1, xsize, f);
+    fclose(f);
+}
+
+static int decode_write_frame(const char *outfilename, AVCodecContext *avctx,
+                              struct SwsContext *img_convert_ctx, AVFrame *frame, int *frame_count,
+                              AVPacket *pkt, int last) {
+    int len, got_frame;
+    char buf[1024];
+
+    len = avcodec_decode_video2(avctx, frame, &got_frame, pkt);
+    if (len < 0) {
+        fprintf(stderr, "Error while decoding frame %d\n", *frame_count);
+        return len;
+    }
+    if (got_frame) {
+        printf("Saving %sframe %3d\n", last ? "last " : "", *frame_count);
+        fflush(stdout);
+
+        /* the picture is allocated by the decoder, no need to free it */
+        snprintf(buf, sizeof(buf), "%s%d.bmp", outfilename, *frame_count);
+
+        /*
+        pgm_save(frame->data[0], frame->linesize[0],
+                 frame->width, frame->height, buf);
+        */
+
+        saveBMP(img_convert_ctx, frame, buf);
+
+        (*frame_count)++;
+    }
+    return 0;
 }
 
 /*
@@ -579,4 +713,55 @@ Java_com_example_ffmpegstudy_MediaOperationManager_encodeH264(JNIEnv *env, jobje
     fclose(outputFile);
     avcodec_free_context(&avCodecContext);
     av_frame_free(&avFrame);
+}
+
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_ffmpegstudy_MediaOperationManager_extractImage(JNIEnv *env, jobject thiz,
+                                                                jstring input_path,
+                                                                jstring output_path) {
+    const char *inputFilePath = env->GetStringUTFChars(input_path, NULL);
+    const char *outputFilePath = env->GetStringUTFChars(output_path, NULL);
+    AVFormatContext *avFormatContext = NULL;
+    const int openInputResult = avformat_open_input(&avFormatContext, inputFilePath, NULL, NULL);
+    const int findStreamResult = avformat_find_stream_info(avFormatContext, NULL);
+    const int streamIndex = av_find_best_stream(avFormatContext, AVMEDIA_TYPE_VIDEO, -1, -1, NULL,
+                                                0);
+    const AVStream *avStream = avFormatContext->streams[streamIndex];
+    AVCodec *avCodec = avcodec_find_decoder(avStream->codecpar->codec_id);
+    AVCodecContext *avCodecContext = avcodec_alloc_context3(NULL);
+    const int toContextResult = avcodec_parameters_to_context(avCodecContext, avStream->codecpar);
+    const int openResult = avcodec_open2(avCodecContext, avCodec, NULL);
+
+
+    SwsContext *swsContext = sws_getContext(avCodecContext->width, avCodecContext->height,
+                                            avCodecContext->pix_fmt,
+                                            avCodecContext->width, avCodecContext->height,
+                                            AV_PIX_FMT_BGR24,
+                                            SWS_BICUBIC, NULL, NULL, NULL);
+    AVFrame *avFrame = av_frame_alloc();
+
+    AVPacket avPacket;
+    av_init_packet(&avPacket);
+    avPacket.data = NULL;
+    avPacket.size = 0;
+    int frameCount = 0;
+
+//    int readResult = av_read_frame(avFormatContext, &avPacket);
+    while (av_read_frame(avFormatContext, &avPacket) >= 0) {
+        if (avPacket.stream_index != streamIndex) {
+            continue;
+        }
+        decode_write_frame(outputFilePath, avCodecContext, swsContext, avFrame,
+                           &frameCount, &avPacket, 0);
+        av_packet_unref(&avPacket);
+    }
+    avPacket.data = NULL;
+    avPacket.size = 0;
+    decode_write_frame(outputFilePath, avCodecContext, swsContext, avFrame,
+                       &frameCount, &avPacket, 1);
+    sws_freeContext(swsContext);
+    av_frame_free(&avFrame);
+    avformat_close_input(&avFormatContext);
 }

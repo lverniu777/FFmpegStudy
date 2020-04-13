@@ -32,6 +32,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import utils.FileUtils;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -44,30 +47,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final MediaOperationManager mediaOperationManager = MediaOperationManager.getInstance();
     private static final int PERMISSION_REQUEST_CODE = 10086;
     private static final int CHOOSE_FILE_REQUEST_CODE = 6;
-    private Button mChooseFileBtn;
-    private Button mExtractAACBtn;
-    private Button mExtractH264Btn;
-    private Button mMP4ConvertToFLVBtn;
-    private Button mEncodeH264Btn;
-    private ProgressBar mProgressBar;
-    private TextView mFileNameTv;
+    @BindView(R.id.progress_bar)
+    ProgressBar mProgressBar;
+    @BindView(R.id.media_file_name)
+    TextView mFileNameTv;
+    @BindView(R.id.choose_media_file)
+    Button mChooseFileBtn;
+    @BindView(R.id.extract_aac)
+    Button mExtractAACBtn;
+    @BindView(R.id.extract_h264)
+    Button mExtractH264Btn;
+    @BindView(R.id.convert_mp4_flv)
+    Button mMP4ConvertToFLVBtn;
+    @BindView(R.id.encodeh264)
+    Button mEncodeH264Btn;
+    @BindView(R.id.extractImage)
+    Button mExtractImage;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mChooseFileBtn = findViewById(R.id.choose_media_file);
-        mExtractAACBtn = findViewById(R.id.extract_aac);
-        mExtractH264Btn = findViewById(R.id.extract_h264);
-        mFileNameTv = findViewById(R.id.media_file_name);
-        mMP4ConvertToFLVBtn = findViewById(R.id.convert_mp4_flv);
-        mEncodeH264Btn = findViewById(R.id.encodeh264);
-        mProgressBar = findViewById(R.id.progress_bar);
-        mChooseFileBtn.setOnClickListener(this);
-        mExtractAACBtn.setOnClickListener(this);
-        mExtractH264Btn.setOnClickListener(this);
-        mMP4ConvertToFLVBtn.setOnClickListener(this);
-        mEncodeH264Btn.setOnClickListener(this);
+        ButterKnife.bind(this);
         ActivityCompat.requestPermissions(this,
                 new String[]{
                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -90,6 +92,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    @OnClick({R.id.choose_media_file, R.id.extract_aac, R.id.extract_h264, R.id.media_file_name,
+            R.id.convert_mp4_flv, R.id.encodeh264, R.id.progress_bar, R.id.extractImage})
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -110,6 +114,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.encodeh264:
                 performAction(new EncodeH264());
+                break;
+            case R.id.extractImage:
+                performAction(new ExtractImage());
                 break;
         }
     }
@@ -141,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
     private class ExtractAAC implements Runnable {
 
         @Override
@@ -149,12 +157,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             final String outputFilePath = FileUtils.INSTANCE.getROOT_DIR() + File.separator
                     + System.currentTimeMillis() + ".aac";
             mediaOperationManager.extractAudio(inputFilePath, outputFilePath);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MainActivity.this, "输出文件：" + outputFilePath, Toast.LENGTH_LONG).show();
-                    mProgressBar.setVisibility(View.GONE);
-                }
+            runOnUiThread(() -> {
+                Toast.makeText(MainActivity.this, "输出文件：" + outputFilePath, Toast.LENGTH_LONG).show();
+                mProgressBar.setVisibility(View.GONE);
             });
         }
     }
@@ -167,12 +172,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             final String outputFilePath = FileUtils.INSTANCE.getROOT_DIR() + File.separator
                     + System.currentTimeMillis() + ".h264";
             mediaOperationManager.extractAudio(inputFilePath, outputFilePath);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MainActivity.this, "输出文件：" + outputFilePath, Toast.LENGTH_LONG).show();
-                    mProgressBar.setVisibility(View.GONE);
-                }
+            runOnUiThread(() -> {
+                Toast.makeText(MainActivity.this, "输出文件：" + outputFilePath, Toast.LENGTH_LONG).show();
+                mProgressBar.setVisibility(View.GONE);
             });
         }
     }
@@ -211,12 +213,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             final String outputFilePath = FileUtils.INSTANCE.getROOT_DIR() + File.separator
                     + System.currentTimeMillis() + ".h264";
             mediaOperationManager.encodeH264(outputFilePath);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MainActivity.this, "输出文件：" + outputFilePath, Toast.LENGTH_LONG).show();
-                    mProgressBar.setVisibility(View.GONE);
-                }
+            runOnUiThread(() -> {
+                Toast.makeText(MainActivity.this, "输出文件：" + outputFilePath, Toast.LENGTH_LONG).show();
+                mProgressBar.setVisibility(View.GONE);
+            });
+        }
+    }
+
+    private class ExtractImage implements Runnable {
+        @Override
+        public void run() {
+            final String inputFilePath = mFileNameTv.getText().toString();
+            final String outputFilePath = FileUtils.INSTANCE.getROOT_DIR() + File.separator
+                    + System.currentTimeMillis()+File.separator;
+            final File outputDir = new File(outputFilePath);
+            if (!outputDir.exists() && !outputDir.mkdirs()) {
+                Toast.makeText(MainActivity.this, "目录创建失败：" + outputFilePath, Toast.LENGTH_LONG).show();
+                return;
+            }
+            mediaOperationManager.extractImage(inputFilePath, outputFilePath);
+            runOnUiThread(() -> {
+                Toast.makeText(MainActivity.this, "输出文件：" + outputFilePath, Toast.LENGTH_LONG).show();
+                mProgressBar.setVisibility(View.GONE);
             });
         }
     }

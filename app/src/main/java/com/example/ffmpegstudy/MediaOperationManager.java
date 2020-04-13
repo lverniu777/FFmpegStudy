@@ -42,4 +42,6 @@ public class MediaOperationManager {
     public native void cutVideo(String inputPath, String outputPath, int startTime, int endTime);
 
     public native void encodeH264(String outputPath);
+
+    public native void extractImage(String inputString, String outputPath);
 }
