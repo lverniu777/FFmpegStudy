@@ -4,8 +4,9 @@
 # Sets the minimum version of CMake required to build the native library.
 
 cmake_minimum_required(VERSION 3.4.1)
+set(libpath ${PROJECT_SOURCE_DIR}/jniLibs/${CMAKE_ANDROID_ARCH_ABI})
 include_directories(
-        include
+        cpp/include
 )
 add_definitions(-Wno-format-security)
 
@@ -21,7 +22,7 @@ add_library( # Sets the name of the library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        native-lib.cpp
+        cpp/native-lib.cpp
         )
 add_library(
         avcodec
@@ -31,7 +32,7 @@ add_library(
 set_target_properties(
         avcodec
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libavcodec.so
+        ${libpath}/libavcodec.so
 )
 
 add_library(
@@ -42,7 +43,7 @@ add_library(
 set_target_properties(
         avdevice
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libavdevice.so
+        ${libpath}/libavdevice.so
 )
 
 add_library(
@@ -53,7 +54,7 @@ add_library(
 set_target_properties(
         avfilter
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libavfilter.so
+        ${libpath}/libavfilter.so
 )
 
 add_library(
@@ -64,7 +65,7 @@ add_library(
 set_target_properties(
         avformat
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libavformat.so
+        ${libpath}/libavformat.so
 )
 
 add_library(
@@ -75,7 +76,7 @@ add_library(
 set_target_properties(
         avutil
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libavutil.so
+        ${libpath}/libavutil.so
 )
 
 
@@ -87,7 +88,7 @@ add_library(
 set_target_properties(
         swresample
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libswresample.so
+        ${libpath}/libswresample.so
 )
 
 
@@ -99,7 +100,7 @@ add_library(
 set_target_properties(
         swscale
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libswscale.so
+        ${libpath}/libswscale.so
 )
 
 add_library(
@@ -110,7 +111,7 @@ add_library(
 set_target_properties(
         x264
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libx2641.so
+        ${libpath}/libx2641.so
 )
 add_library(
         fdkaac
@@ -120,7 +121,7 @@ add_library(
 set_target_properties(
         fdkaac
         PROPERTIES IMPORTED_LOCATION
-        D:/AndroidStudio/sourcecode/FFmpegStudy/app/src/main/jniLibs/arm64-v8a/libfdk-aac.so
+        ${libpath}/libfdk-aac.so
 )
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
