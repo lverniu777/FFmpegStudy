@@ -111,7 +111,7 @@ add_library(
 set_target_properties(
         x264
         PROPERTIES IMPORTED_LOCATION
-        ${libpath}/libx2641.so
+        ${libpath}/libx264.so
 )
 add_library(
         fdkaac
