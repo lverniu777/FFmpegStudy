@@ -7,18 +7,11 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.DocumentsContract;
 import android.text.TextUtils;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -51,18 +43,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ProgressBar mProgressBar;
     @BindView(R.id.media_file_name)
     TextView mFileNameTv;
-    @BindView(R.id.choose_media_file)
-    Button mChooseFileBtn;
-    @BindView(R.id.extract_aac)
-    Button mExtractAACBtn;
-    @BindView(R.id.extract_h264)
-    Button mExtractH264Btn;
-    @BindView(R.id.convert_mp4_flv)
-    Button mMP4ConvertToFLVBtn;
-    @BindView(R.id.encodeh264)
-    Button mEncodeH264Btn;
-    @BindView(R.id.extractImage)
-    Button mExtractImage;
+
+    private MediaRecord mMediaRecord;
 
 
     @Override
@@ -73,7 +55,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ActivityCompat.requestPermissions(this,
                 new String[]{
                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                        Manifest.permission.READ_EXTERNAL_STORAGE
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.RECORD_AUDIO
                 },
                 PERMISSION_REQUEST_CODE
         );
@@ -93,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @OnClick({R.id.choose_media_file, R.id.extract_aac, R.id.extract_h264, R.id.media_file_name,
-            R.id.convert_mp4_flv, R.id.encodeh264, R.id.progress_bar, R.id.extractImage})
+            R.id.convert_mp4_flv, R.id.encodeh264, R.id.progress_bar, R.id.extractImage, R.id.record_audio_with_mediarecorder})
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -117,6 +100,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.extractImage:
                 performAction(new ExtractImage());
+                break;
+            case R.id.record_audio_with_mediarecorder:
+                new RecordAudio().run();
                 break;
         }
     }
@@ -236,6 +222,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Toast.makeText(MainActivity.this, "输出文件：" + outputFilePath, Toast.LENGTH_LONG).show();
                 mProgressBar.setVisibility(View.GONE);
             });
+        }
+    }
+
+    public class RecordAudio implements Runnable {
+        @Override
+        public void run() {
+
+            if (mMediaRecord == null) {
+                mMediaRecord = new MediaRecord();
+                mMediaRecord.startRecording();
+            } else {
+                mMediaRecord.release();
+                mMediaRecord = null;
+            }
         }
     }
 }

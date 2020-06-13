@@ -88,9 +88,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="提取出图片"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/record_audio_with_mediarecorder"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/encodeh264" />
+
+    <Button
+        android:id="@+id/record_audio_with_mediarecorder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="MediaRecorder录制音频"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/extractImage" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
